@@ -21,6 +21,19 @@ const videoCallSocket = require("./src/sockets/videoCallSocket");
 const PORT = process.env.PORT || 5000;
 const HOST = "0.0.0.0";
 
+// Handle uncaught exceptions
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught Exception:", err.message);
+  console.error(err.stack);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
+});
+
 // Create HTTP server
 const server = http.createServer(app);
 
@@ -46,6 +59,7 @@ connectDB()
       console.log(`✅ Host: ${HOST}`);
       console.log(`✅ Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(`✅ Socket.io initialized for real-time communication`);
+      console.log(`✅ Health check: http://localhost:${PORT}/api/health`);
     });
 
     // Handle server errors
@@ -78,5 +92,6 @@ connectDB()
   .catch((err) => {
     console.error("❌ DB connection failed:", err.message);
     console.error("❌ Make sure MONGO_URI is correct and MongoDB Atlas is accessible");
+    console.error("❌ Check your MongoDB Atlas network access settings");
     process.exit(1);
   });
