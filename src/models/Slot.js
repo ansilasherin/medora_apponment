@@ -7,7 +7,7 @@ const slotSchema = new mongoose.Schema(
     time: { type: String, required: true }, // "10:30 AM"
     isBooked: { type: Boolean, default: false }
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 // Avoid duplicate slots for same doctor/date/time

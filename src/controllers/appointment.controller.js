@@ -4,14 +4,17 @@ const Doctor = require("../models/Doctor");
 
 exports.createAppointment = async (req, res) => {
   try {
-    const { doctor_id, slot_id, patient_name, age, gender, problem } = req.body || {};
+    const { doctor_id, slot_id, patient_name, age, gender } = req.body || {};
+    const doctorId = doctor_id || req.body?.doctorId;
+    const slotId = slot_id || req.body?.slotId;
+    const patientName = patient_name || req.body?.patientName;
 
-    if (!doctor_id || !slot_id || !patient_name || !age || !gender) {
-      return res.status(400).json({ status: false, message: "Missing fields" });
+    if (!doctorId || !slotId || !patientName || !age || !gender) {
+      return res.status(400).json({ status: false, message: "Missing required fields" });
     }
 
     const bookedSlot = await Slot.findOneAndUpdate(
-      { _id: slot_id, doctorId: doctor_id, isBooked: false },
+      { _id: slotId, doctorId, isBooked: false },
       { $set: { isBooked: true } },
       { new: true }
     );
@@ -20,23 +23,23 @@ exports.createAppointment = async (req, res) => {
       return res.status(400).json({ status: false, message: "Slot already booked / invalid slot" });
     }
 
-    const doctor = await Doctor.findById(doctor_id);
+    const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
-      await Slot.updateOne({ _id: slot_id }, { $set: { isBooked: false } });
+      await Slot.updateOne({ _id: slotId }, { $set: { isBooked: false } });
       return res.status(404).json({ status: false, message: "Doctor not found" });
     }
 
-    const appt = await Appointment.create({
+    const appointmentData = {
+      ...req.body,
       userId: req.user.id,
-      doctorId: doctor_id,
-      slotId: slot_id,
-      patientName: patient_name,
-      age,
-      gender,
-      problem: problem || "",
+      doctorId,
+      slotId,
+      patientName,
       amount: doctor.consultationFee,
       status: "PENDING_PAYMENT"
-    });
+    };
+
+    const appt = await Appointment.create(appointmentData);
 
     return res.json({
       status: true,
@@ -60,9 +63,9 @@ exports.getAppointments = async (req, res) => {
     if (req.query.status) filter.status = req.query.status;
 
     const list = await Appointment.find(filter)
-      .populate("doctorId", "name consultationFee about")
-      .populate("slotId", "date time")
-      .populate("userId", "name email");
+      .populate("doctorId")
+      .populate("slotId")
+      .populate("userId");
 
     res.json({ status: true, appointments: list });
   } catch (err) {
@@ -73,9 +76,9 @@ exports.getAppointments = async (req, res) => {
 exports.getAppointment = async (req, res) => {
   try {
     const appt = await Appointment.findById(req.params.id)
-      .populate("doctorId", "name consultationFee about")
-      .populate("slotId", "date time")
-      .populate("userId", "name email");
+      .populate("doctorId")
+      .populate("slotId")
+      .populate("userId");
 
     if (!appt) {
       return res.status(404).json({ status: false, message: "Appointment not found" });
@@ -89,16 +92,18 @@ exports.getAppointment = async (req, res) => {
 
 exports.updateAppointment = async (req, res) => {
   try {
-    const { doctor_id, slot_id, patient_name, age, gender, problem } = req.body || {};
+    const { doctor_id, slot_id, patient_name } = req.body || {};
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment) {
       return res.status(404).json({ status: false, message: "Appointment not found" });
     }
 
-    if (slot_id && String(slot_id) !== String(appointment.slotId)) {
-      const selectedDoctorId = doctor_id || appointment.doctorId;
+    const doctorId = doctor_id || req.body?.doctorId || appointment.doctorId;
+    const slotId = slot_id || req.body?.slotId;
+
+    if (slotId && String(slotId) !== String(appointment.slotId)) {
       const bookedSlot = await Slot.findOneAndUpdate(
-        { _id: slot_id, doctorId: selectedDoctorId, isBooked: false },
+        { _id: slotId, doctorId, isBooked: false },
         { $set: { isBooked: true } },
         { new: true }
       );
@@ -108,17 +113,20 @@ exports.updateAppointment = async (req, res) => {
       }
 
       await Slot.updateOne({ _id: appointment.slotId }, { $set: { isBooked: false } });
-      appointment.slotId = slot_id;
+      appointment.slotId = slotId;
     }
 
-    if (doctor_id) appointment.doctorId = doctor_id;
-    if (patient_name !== undefined) appointment.patientName = patient_name;
-    if (age !== undefined) appointment.age = age;
-    if (gender !== undefined) appointment.gender = gender;
-    if (problem !== undefined) appointment.problem = problem;
+    const appointmentData = {
+      ...req.body,
+      doctorId,
+      slotId: slotId || appointment.slotId,
+      patientName: patient_name || req.body?.patientName || appointment.patientName,
+    };
 
-    if (doctor_id) {
-      const doctor = await Doctor.findById(doctor_id);
+    appointment.set(appointmentData);
+
+    if (req.body.doctor_id || req.body.doctorId) {
+      const doctor = await Doctor.findById(doctorId);
       if (doctor) appointment.amount = doctor.consultationFee;
     }
 

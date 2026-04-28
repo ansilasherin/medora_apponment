@@ -22,7 +22,7 @@ exports.getSpecialistById = async (req, res) => {
 
 exports.createSpecialist = async (req, res) => {
   try {
-    const { name, icon } = req.body || {};
+    const { name } = req.body || {};
 
     if (!name) {
       return res.status(400).json({
@@ -31,10 +31,7 @@ exports.createSpecialist = async (req, res) => {
       });
     }
 
-    const sp = await Specialist.create({
-      name,
-      icon: icon || ""
-    });
+    const sp = await Specialist.create({ ...req.body });
 
     res.json({
       status: true,
@@ -49,13 +46,10 @@ exports.createSpecialist = async (req, res) => {
 
 exports.updateSpecialist = async (req, res) => {
   try {
-    const updateData = {};
-    if (req.body.name !== undefined) updateData.name = req.body.name;
-    if (req.body.icon !== undefined) updateData.icon = req.body.icon;
-
-    const specialist = await Specialist.findByIdAndUpdate(req.params.id, updateData, {
+    const specialist = await Specialist.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
+      strict: false,
     });
 
     if (!specialist) return res.status(404).json({ status: false, message: "Specialist not found" });

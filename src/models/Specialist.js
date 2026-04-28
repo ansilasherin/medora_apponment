@@ -5,7 +5,7 @@ const specialistSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     icon: { type: String, default: "" }
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 module.exports = mongoose.model("Specialist", specialistSchema);

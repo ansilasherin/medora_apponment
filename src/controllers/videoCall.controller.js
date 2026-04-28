@@ -20,8 +20,8 @@ exports.startCall = async (req, res) => {
 
     // Verify appointment exists and user is authorized
     const appointment = await Appointment.findById(appointmentId)
-      .populate("doctorId", "name")
-      .populate("userId", "name");
+      .populate("doctorId")
+      .populate("userId");
 
     if (!appointment) {
       return res.status(404).json({
@@ -91,8 +91,8 @@ exports.getCallStatus = async (req, res) => {
     const { appointmentId } = req.params;
 
     const appointment = await Appointment.findById(appointmentId)
-      .populate("doctorId", "name")
-      .populate("userId", "name");
+      .populate("doctorId")
+      .populate("userId");
 
     if (!appointment) {
       return res.status(404).json({
@@ -187,8 +187,8 @@ exports.getCallHistory = async (req, res) => {
       ],
       status: "CONFIRMED"
     })
-    .populate("doctorId", "name consultationFee")
-    .populate("slotId", "date time")
+    .populate("doctorId")
+    .populate("slotId")
     .sort({ createdAt: -1 })
     .limit(20);
 

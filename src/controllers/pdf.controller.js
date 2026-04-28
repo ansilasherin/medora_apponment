@@ -4,9 +4,9 @@ const Appointment = require("../models/Appointment");
 exports.getAppointmentPDF = async (req, res) => {
   try {
     const appt = await Appointment.findById(req.params.id)
-      .populate("doctorId", "name consultationFee about")
-      .populate("slotId", "date time")
-      .populate("userId", "name email");
+      .populate("doctorId")
+      .populate("slotId")
+      .populate("userId");
 
     if (!appt) {
       return res.status(404).json({ status: false, message: "Appointment not found" });

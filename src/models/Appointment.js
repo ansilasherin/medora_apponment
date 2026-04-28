@@ -15,7 +15,7 @@ const appointmentSchema = new mongoose.Schema(
     amount: { type: Number, required: true },
     status: { type: String, enum: ["PENDING_PAYMENT", "CONFIRMED"], default: "PENDING_PAYMENT" }
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 module.exports = mongoose.model("Appointment", appointmentSchema);

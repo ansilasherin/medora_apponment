@@ -36,12 +36,12 @@ exports.register = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
-      name,
-      email: email || "",
-      phone: phone || "",
-      passwordHash
-    });
+    const createData = { ...req.body, passwordHash };
+    delete createData.password;
+    createData.email = email || "";
+    createData.phone = phone || "";
+
+    const user = await User.create(createData);
 
     res.json({
       status: true,

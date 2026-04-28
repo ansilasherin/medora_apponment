@@ -13,7 +13,7 @@ const doctorSchema = new mongoose.Schema(
     experience: { type: Number, default: 0 },
     rating: { type: Number, default: 4.5 }
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 module.exports = mongoose.model("Doctor", doctorSchema);

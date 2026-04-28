@@ -41,12 +41,7 @@ exports.getSlotsByDoctorAndDate = async (req, res) => {
 
     res.json({
       status: true,
-      slots: slots.map((s) => ({
-        slot_id: s._id,
-        date: s.date,
-        time: s.time,
-        available: !s.isBooked
-      }))
+      slots,
     });
   } catch (err) {
     res.status(500).json({ status: false, message: err.message });
@@ -55,7 +50,7 @@ exports.getSlotsByDoctorAndDate = async (req, res) => {
 
 exports.getSlotById = async (req, res) => {
   try {
-    const slot = await Slot.findById(req.params.id).populate("doctorId", "name consultationFee");
+    const slot = await Slot.findById(req.params.id).populate("doctorId");
     if (!slot) return res.status(404).json({ status: false, message: "Slot not found" });
 
     res.json({ status: true, slot });
@@ -66,14 +61,10 @@ exports.getSlotById = async (req, res) => {
 
 exports.updateSlot = async (req, res) => {
   try {
-    const updateData = {};
-    ["doctorId", "date", "time", "isBooked"].forEach((key) => {
-      if (req.body[key] !== undefined) updateData[key] = req.body[key];
-    });
-
-    const slot = await Slot.findByIdAndUpdate(req.params.id, updateData, {
+    const slot = await Slot.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
+      strict: false,
     });
 
     if (!slot) return res.status(404).json({ status: false, message: "Slot not found" });

@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, unique: true, default: "", trim: true },
     passwordHash: { type: String, required: true }
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 module.exports = mongoose.model("User", userSchema);
