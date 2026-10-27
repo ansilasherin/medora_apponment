@@ -36,6 +36,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root endpoint (friendly landing response)
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    status: true,
+    message: "Doctor Appointment API is live and running!",
+    endpoints: {
+      health: "/api/health",
+      doctors: "/api/doctors",
+      specialists: "/api/specialists",
+      appointments: "/api/appointments",
+      videoCallTest: "/video-call.html"
+    }
+  });
+});
+
 // Health check endpoint (Render uses this to verify app is running)
 app.get("/api/health", (req, res) => {
   res.json({
