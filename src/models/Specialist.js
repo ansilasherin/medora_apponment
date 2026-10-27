@@ -3,7 +3,9 @@ const mongoose = require("mongoose");
 const specialistSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    icon: { type: String, default: "" }
+    description: { type: String, default: "" },
+    icon: { type: String, default: "" },
+    isActive: { type: Boolean, default: true }
   },
   { timestamps: true, strict: false }
 );

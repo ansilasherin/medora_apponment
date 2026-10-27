@@ -7,16 +7,11 @@ const {
   getCallHistory
 } = require("../controllers/videoCall.controller");
 
-// Start a video/audio call
 router.post("/start", auth, startCall);
-
-// Get call status for an appointment
 router.get("/status/:appointmentId", auth, getCallStatus);
-
-// End a call
+router.get("/:callId/status", auth, getCallStatus);
 router.post("/end/:appointmentId", auth, endCall);
-
-// Get call history for the user
+router.post("/:callId/end", auth, endCall);
 router.get("/history", auth, getCallHistory);
 
 module.exports = router;

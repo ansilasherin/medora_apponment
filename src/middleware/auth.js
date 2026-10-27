@@ -5,10 +5,11 @@ module.exports = function auth(req, res, next) {
 
   const token = header.startsWith("Bearer ")
     ? header.slice(7)
-    : null;
+    : (header ? header : null);
 
   if (!token) {
     return res.status(401).json({
+      success: false,
       status: false,
       message: "No token provided"
     });
@@ -16,10 +17,11 @@ module.exports = function auth(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;   // attach user info
+    req.user = decoded;
     next();
   } catch (err) {
     return res.status(401).json({
+      success: false,
       status: false,
       message: "Invalid token"
     });

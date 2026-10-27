@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const auth = require("../middleware/auth");
+const authorize = require("../middleware/role");
 
 const {
   createDoctor,
@@ -10,14 +11,18 @@ const {
 } = require("../controllers/doctor.controller");
 const { createSlotsForDoctor, getSlotsByDoctorAndDate } = require("../controllers/slot.controller");
 
-router.post("/", auth, createDoctor);
-router.get("/", auth, getDoctors);
-router.get("/:id", auth, getDoctorById);
+// Public endpoints
+router.get("/", getDoctors);
+router.get("/:id", getDoctorById);
+router.get("/:id/slots", getSlotsByDoctorAndDate); // Legacy & convenient doctor slots
+
+// Admin endpoints
+router.post("/", auth, authorize("admin"), createDoctor);
+router.delete("/:id", auth, authorize("admin"), deleteDoctor);
+
+// Admin or Doctor endpoints
 router.put("/:id", auth, updateDoctor);
 router.patch("/:id", auth, updateDoctor);
-router.delete("/:id", auth, deleteDoctor);
-
 router.post("/:id/slots", auth, createSlotsForDoctor);
-router.get("/:id/slots", auth, getSlotsByDoctorAndDate);
 
 module.exports = router;

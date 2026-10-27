@@ -1,10 +1,22 @@
 const router = require("express").Router();
 const auth = require("../middleware/auth");
-const { getSlotById, updateSlot, deleteSlot } = require("../controllers/slot.controller");
+const authorize = require("../middleware/role");
+const {
+  getSlotsByDoctor,
+  createSlot,
+  getSlotById,
+  updateSlot,
+  deleteSlot
+} = require("../controllers/slot.controller");
 
-router.get("/:id", auth, getSlotById);
-router.put("/:id", auth, updateSlot);
-router.patch("/:id", auth, updateSlot);
-router.delete("/:id", auth, deleteSlot);
+// Public endpoints
+router.get("/doctor/:doctorId", getSlotsByDoctor);
+router.get("/:id", getSlotById);
+
+// Protected endpoints (Doctor or Admin)
+router.post("/", auth, authorize("doctor", "admin"), createSlot);
+router.patch("/:id", auth, authorize("doctor", "admin"), updateSlot);
+router.put("/:id", auth, authorize("doctor", "admin"), updateSlot);
+router.delete("/:id", auth, authorize("admin", "doctor"), deleteSlot);
 
 module.exports = router;

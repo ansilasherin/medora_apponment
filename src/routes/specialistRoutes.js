@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const auth = require("../middleware/auth");
+const authorize = require("../middleware/role");
 
 const {
   getAllSpecialists,
@@ -9,11 +10,14 @@ const {
   deleteSpecialist
 } = require("../controllers/specialist.controller");
 
-router.get("/", auth, getAllSpecialists);
-router.get("/:id", auth, getSpecialistById);
-router.post("/", auth, createSpecialist);
-router.put("/:id", auth, updateSpecialist);
-router.patch("/:id", auth, updateSpecialist);
-router.delete("/:id", auth, deleteSpecialist);
+// Public endpoints
+router.get("/", getAllSpecialists);
+router.get("/:id", getSpecialistById);
+
+// Admin-only endpoints
+router.post("/", auth, authorize("admin"), createSpecialist);
+router.put("/:id", auth, authorize("admin"), updateSpecialist);
+router.patch("/:id", auth, authorize("admin"), updateSpecialist);
+router.delete("/:id", auth, authorize("admin"), deleteSpecialist);
 
 module.exports = router;

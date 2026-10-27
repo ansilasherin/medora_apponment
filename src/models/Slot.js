@@ -3,14 +3,14 @@ const mongoose = require("mongoose");
 const slotSchema = new mongoose.Schema(
   {
     doctorId: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true },
-    date: { type: String, required: true }, // "YYYY-MM-DD"
-    time: { type: String, required: true }, // "10:30 AM"
+    date: { type: String }, // "YYYY-MM-DD"
+    time: { type: String }, // "10:30 AM"
+    startTime: { type: String }, // ISO string or time string
+    endTime: { type: String },
+    isAvailable: { type: Boolean, default: true },
     isBooked: { type: Boolean, default: false }
   },
   { timestamps: true, strict: false }
 );
-
-// Avoid duplicate slots for same doctor/date/time
-slotSchema.index({ doctorId: 1, date: 1, time: 1 }, { unique: true });
 
 module.exports = mongoose.model("Slot", slotSchema);

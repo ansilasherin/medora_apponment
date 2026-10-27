@@ -1,807 +1,537 @@
-# API Documentation
+# Doctor Appointment API — Complete Documentation
 
-## Authentication
+A comprehensive, production-ready REST API for managing doctor appointments, consultations, scheduling, user management, payments, video calls, and real-time chat.
 
-### Register
+**Local Base URL:** `http://localhost:5000`  
+**Production Base URL:** `https://your-domain.com`
+
+---
+
+## 🔑 Test Login Credentials
+All test accounts are already seeded in MongoDB. The default password for all test accounts is **`password123`**.
+
+| Role | Email | Password | Description |
+|---|---|---|---|
+| **Admin** | `admin@hospital.com` | `password123` | Full administrative control (manage users, specialists, doctors, view payments) |
+| **Patient** | `patient@example.com` | `password123` | John Doe (Book appointments, chat, make payments) |
+| **Patient** | `anu@gmail.com` | `password123` | Anu (Second patient account for multi-user testing) |
+| **Doctor** | `dr.john@hospital.com` | `password123` | Dr. John Smith (Cardiology) |
+| **Doctor** | `dr.rahul@hospital.com` | `password123` | Dr. Rahul (Orthopedic) |
+| **Doctor** | `dr.selin@hospital.com` | `password123` | Dr. Selin (Dentist) |
+| **Doctor** | `dr.hazin@hospital.com` | `password123` | Dr. Hazin (Dermatologist) |
+| **Doctor** | `dr.arjun@hospital.com` | `password123` | Dr. Arjun (Neurologist) |
+| **Doctor** | `dr.meera@hospital.com` | `password123` | Dr. Meera (Pediatrician) |
+
+> **Header for Protected Routes:**  
+> `Authorization: Bearer <your_jwt_token>`
+
+---
+
+## 1. Authentication (`/api/auth`)
+
+### 1.1 Register
 **POST** `/api/auth/register`  
-**Body:**
+*Auth: Public*
+
+**Request Body:**
 ```json
 {
-  "name": "John Doe",
-  "email": "john@example.com",
-  "phone": "+1234567890",
-  "password": "securePassword123",
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "phone": "+919876543299",
+  "password": "password123",
   "role": "patient"
 }
 ```
-**Response:**
+*Note: `role` can be `"patient"`, `"doctor"`, or `"admin"`. Defaults to `"patient"`.*
+
+**Response (201 Created):**
 ```json
 {
   "success": true,
+  "status": true,
   "message": "User registered successfully",
+  "token": "eyJhbGciOiJIUzI1NiIsIn...",
   "user": {
-    "_id": "507f1f77bcf86cd799439011",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "phone": "+1234567890",
+    "_id": "662f...",
+    "id": "662f...",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "phone": "+919876543299",
     "role": "patient",
-    "createdAt": "2026-04-27T10:30:00Z"
-  },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "createdAt": "2026-10-27T12:00:00.000Z"
+  }
 }
 ```
 
-### Login
+### 1.2 Login
 **POST** `/api/auth/login`  
-**Body:**
+*Auth: Public*
+
+**Request Body:**
 ```json
 {
-  "email": "john@example.com",
-  "password": "securePassword123"
+  "email": "patient@example.com",
+  "password": "password123"
 }
 ```
-**Response:**
+
+**Response (200 OK):**
 ```json
 {
   "success": true,
+  "status": true,
   "message": "Login successful",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token": "eyJhbGciOiJIUzI1NiIsIn...",
   "user": {
-    "_id": "507f1f77bcf86cd799439011",
+    "_id": "662f...",
     "name": "John Doe",
+    "email": "patient@example.com",
+    "phone": "+1234567890",
     "role": "patient"
   }
 }
 ```
 
-## Users Management
+---
 
-### Get All Users
-**GET** `/api/users`  
-**Headers:** `Authorization: Bearer <token>`  
-**Query:** `?role=patient&page=1&limit=10&search=john`  
-**Response:**
-```json
-{
-  "success": true,
-  "users": [
-    {
-      "_id": "507f1f77bcf86cd799439011",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "phone": "+1234567890",
-      "role": "patient",
-      "dateOfBirth": "1990-05-15",
-      "gender": "male",
-      "address": "123 Main St, City"
-    }
-  ],
-  "total": 50,
-  "page": 1,
-  "pages": 5
-}
-```
+## 2. User Management (`/api/users`)
 
-### Get User Profile
+### 2.1 Get Own Profile
 **GET** `/api/users/profile`  
-**Headers:** `Authorization: Bearer <token>`  
+*Auth: Bearer Token*
+
 **Response:**
 ```json
 {
   "success": true,
   "user": {
-    "_id": "507f1f77bcf86cd799439011",
+    "_id": "662f...",
     "name": "John Doe",
-    "email": "john@example.com",
+    "email": "patient@example.com",
     "phone": "+1234567890",
     "role": "patient",
-    "profilePic": "url_to_image",
-    "dateOfBirth": "1990-05-15",
+    "dateOfBirth": "1992-06-15",
     "gender": "male",
-    "address": "123 Main St, City"
+    "address": "123 Marine Drive, City",
+    "profilePic": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400"
   }
 }
 ```
 
-### Update User Profile
+### 2.2 Update Profile
 **PUT** `/api/users/profile`  
-**Headers:** `Authorization: Bearer <token>`  
-**Body:**
+*Auth: Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "name": "Jane Doe",
-  "dateOfBirth": "1990-05-15",
-  "gender": "female",
-  "address": "456 Oak Ave, City",
-  "profilePic": "base64_or_url"
+  "name": "Johnathan Doe",
+  "dateOfBirth": "1992-06-15",
+  "gender": "male",
+  "address": "456 Palm Grove, Kochi",
+  "profilePic": "https://example.com/new-pic.jpg"
 }
 ```
+
+### 2.3 List All Users (Admin)
+**GET** `/api/users`  
+*Auth: Admin Bearer Token*  
+*Query Params: `?role=patient&page=1&limit=10&search=john`*
+
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Profile updated successfully",
-  "user": { ... updated user object ... }
+  "users": [...],
+  "total": 9,
+  "page": 1,
+  "pages": 1
 }
 ```
 
-### Delete User
+### 2.4 Delete User (Admin)
 **DELETE** `/api/users/:userId`  
-**Headers:** `Authorization: Bearer <token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "message": "User deleted successfully"
-}
-```
+*Auth: Admin Bearer Token*
 
-## Specialists
+---
 
-### Get All Specialists
+## 3. Specialists (`/api/specialists`)
+
+### 3.1 List All Specialists
 **GET** `/api/specialists`  
+*Auth: Public*
+
 **Response:**
 ```json
 {
   "success": true,
   "specialists": [
     {
-      "_id": "507f1f77bcf86cd799439012",
+      "_id": "662f...",
       "name": "Cardiology",
-      "description": "Heart and cardiovascular diseases",
-      "icon": "url_to_icon",
-      "isActive": true,
-      "createdAt": "2026-04-01T10:00:00Z"
+      "icon": "🫀",
+      "description": "Specialized in heart, blood vessels, and cardiovascular health.",
+      "isActive": true
+    },
+    {
+      "_id": "662f...",
+      "name": "Dentist",
+      "icon": "🦷",
+      "description": "Comprehensive oral, teeth, gum care and dental surgeries.",
+      "isActive": true
     }
   ]
 }
 ```
 
-### Get Specialist by ID
+### 3.2 Get Specialist by ID
 **GET** `/api/specialists/:id`  
-**Response:**
-```json
-{
-  "success": true,
-  "specialist": {
-    "_id": "507f1f77bcf86cd799439012",
-    "name": "Cardiology",
-    "description": "Heart and cardiovascular diseases",
-    "icon": "url_to_icon",
-    "isActive": true,
-    "createdAt": "2026-04-01T10:00:00Z"
-  }
-}
-```
+*Auth: Public*
 
-### Create Specialist
+### 3.3 Create Specialist (Admin)
 **POST** `/api/specialists`  
-**Headers:** `Authorization: Bearer <admin_token>`  
-**Body:**
+*Auth: Admin Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "name": "Cardiology",
-  "description": "Heart and cardiovascular diseases",
-  "icon": "url_to_icon"
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Specialist created successfully",
-  "specialist": { ... specialist object ... }
+  "name": "Ophthalmology",
+  "icon": "👁️",
+  "description": "Eye care and vision health"
 }
 ```
 
-### Update Specialist
+### 3.4 Update Specialist (Admin)
 **PUT** `/api/specialists/:id`  
-**Headers:** `Authorization: Bearer <admin_token>`  
-**Body:**
-```json
-{
-  "name": "Updated Specialist Name",
-  "description": "Updated description",
-  "isActive": true
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Specialist updated successfully",
-  "specialist": { ... updated specialist object ... }
-}
-```
+*Auth: Admin Bearer Token*
 
-### Delete Specialist
+### 3.5 Delete Specialist (Admin)
 **DELETE** `/api/specialists/:id`  
-**Headers:** `Authorization: Bearer <admin_token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Specialist deleted successfully"
-}
-```
+*Auth: Admin Bearer Token*
 
-## Doctors
+---
 
-### Get All Doctors
+## 4. Doctors (`/api/doctors`)
+
+### 4.1 List All Doctors
 **GET** `/api/doctors`  
-**Query:** `?specialistId=507f...&page=1&limit=10`  
+*Auth: Public*  
+*Query Params: `?specialistId=...&search=rahul&page=1&limit=10`*
+
 **Response:**
 ```json
 {
   "success": true,
   "doctors": [
     {
-      "_id": "507f1f77bcf86cd799439014",
-      "userId": {
-        "_id": "507f1f77bcf86cd799439011",
-        "name": "Dr. John Smith",
-        "email": "john.smith@hospital.com"
-      },
+      "_id": "662f...",
+      "name": "Dr. John Smith",
+      "photo": "https://thumbs.dreamstime.com/...",
       "specialistId": {
-        "_id": "507f1f77bcf86cd799439012",
-        "name": "Cardiology"
+        "_id": "662f...",
+        "name": "Cardiology",
+        "icon": "🫀"
       },
-      "licenseNumber": "LICENSE12345",
+      "consultationFee": 500,
       "experience": 10,
-      "qualifications": ["MBBS", "MD"],
-      "consultationFee": 50,
-      "biography": "Experienced cardiologist with 10 years...",
-      "isActive": true
+      "qualifications": ["MBBS", "MD - Cardiology", "FACC"],
+      "licenseNumber": "CARD-10294",
+      "rating": 4.9,
+      "about": "A renowned cardiologist with over a decade of clinical experience..."
     }
   ],
-  "total": 25,
+  "total": 6,
   "page": 1,
-  "pages": 3
+  "pages": 1
 }
 ```
 
-### Get Doctor by ID
+### 4.2 Get Doctor by ID
 **GET** `/api/doctors/:id`  
-**Response:**
-```json
-{
-  "success": true,
-  "doctor": {
-    "_id": "507f1f77bcf86cd799439014",
-    "userId": { ... user details ... },
-    "specialistId": { ... specialist details ... },
-    "licenseNumber": "LICENSE12345",
-    "experience": 10,
-    "qualifications": ["MBBS", "MD"],
-    "consultationFee": 50,
-    "biography": "Experienced cardiologist...",
-    "workingHours": {
-      "monday": { "start": "09:00", "end": "17:00" },
-      "tuesday": { "start": "09:00", "end": "17:00" }
-    },
-    "isActive": true
-  }
-}
-```
+*Auth: Public*
 
-### Create Doctor
+### 4.3 Create Doctor (Admin)
 **POST** `/api/doctors`  
-**Headers:** `Authorization: Bearer <admin_token>`  
-**Body:**
+*Auth: Admin Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "userId": "507f1f77bcf86cd799439011",
-  "specialistId": "507f1f77bcf86cd799439012",
-  "licenseNumber": "LICENSE12345",
-  "experience": 10,
+  "userId": "662f... (User ID with role doctor)",
+  "specialistId": "662f...",
+  "name": "Dr. Sarah",
+  "licenseNumber": "MED-5501",
+  "experience": 5,
   "qualifications": ["MBBS", "MD"],
-  "consultationFee": 50,
-  "biography": "Experienced cardiologist...",
-  "workingHours": {
-    "monday": { "start": "09:00", "end": "17:00" },
-    "tuesday": { "start": "09:00", "end": "17:00" }
-  }
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Doctor created successfully",
-  "doctor": { ... doctor object ... }
+  "consultationFee": 400,
+  "about": "Specialist biography...",
+  "photo": "https://example.com/doctor.jpg"
 }
 ```
 
-### Update Doctor
+### 4.4 Update Doctor
 **PUT** `/api/doctors/:id`  
-**Headers:** `Authorization: Bearer <token>`  
-**Body:**
-```json
-{
-  "consultationFee": 60,
-  "biography": "Updated biography...",
-  "workingHours": { ... updated hours ... }
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Doctor updated successfully",
-  "doctor": { ... updated doctor object ... }
-}
-```
+*Auth: Bearer Token*
 
-### Delete Doctor
+### 4.5 Delete Doctor (Admin)
 **DELETE** `/api/doctors/:id`  
-**Headers:** `Authorization: Bearer <admin_token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Doctor deleted successfully"
-}
-```
+*Auth: Admin Bearer Token*
 
-## Slots
+---
 
-### Get Available Slots
+## 5. Time Slots (`/api/slots`)
+
+### 5.1 Get Available Slots for a Doctor
 **GET** `/api/slots/doctor/:doctorId`  
-**Query:** `?date=2026-05-15&available=true`  
+*Auth: Public*  
+*Query Params:*  
+- `?date=YYYY-MM-DD` *(Optional: Filter by date)*  
+- `?available=true` *(Optional: Filter only available slots)*
+
 **Response:**
 ```json
 {
   "success": true,
   "slots": [
     {
-      "_id": "507f1f77bcf86cd799439015",
-      "doctorId": "507f1f77bcf86cd799439014",
-      "startTime": "2026-05-15T09:00:00Z",
-      "endTime": "2026-05-15T09:30:00Z",
-      "isAvailable": true
+      "_id": "662f...",
+      "doctorId": "662f...",
+      "date": "2026-10-27",
+      "time": "09:00 AM",
+      "startTime": "2026-10-27T09:00:00Z",
+      "endTime": "2026-10-27T09:30:00Z",
+      "isAvailable": true,
+      "isBooked": false
     }
   ]
 }
 ```
 
-### Get Slot by ID
-**GET** `/api/slots/:id`  
-**Response:**
-```json
-{
-  "success": true,
-  "slot": {
-    "_id": "507f1f77bcf86cd799439015",
-    "doctorId": "507f1f77bcf86cd799439014",
-    "startTime": "2026-05-15T09:00:00Z",
-    "endTime": "2026-05-15T09:30:00Z",
-    "isAvailable": true,
-    "createdAt": "2026-04-20T10:00:00Z"
-  }
-}
-```
-
-### Create Slot
+### 5.2 Create Single Slot
 **POST** `/api/slots`  
-**Headers:** `Authorization: Bearer <doctor_token>`  
-**Body:**
+*Auth: Doctor / Admin Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "doctorId": "507f1f77bcf86cd799439014",
-  "startTime": "2026-05-15T09:00:00Z",
-  "endTime": "2026-05-15T09:30:00Z"
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Slot created successfully",
-  "slot": { ... slot object ... }
+  "doctorId": "662f...",
+  "startTime": "2026-10-28T10:00:00Z",
+  "endTime": "2026-10-28T10:30:00Z",
+  "date": "2026-10-28",
+  "time": "10:00 AM"
 }
 ```
 
-### Update Slot
+### 5.3 Batch Add Slots for Doctor (Convenience)
+**POST** `/api/doctors/:id/slots`  
+*Auth: Doctor / Admin Bearer Token*
+
+**Request Body:**
+```json
+{
+  "date": "2026-10-30",
+  "times": ["09:00 AM", "10:30 AM", "02:00 PM", "04:30 PM"]
+}
+```
+
+### 5.4 Update Slot Availability
 **PATCH** `/api/slots/:id`  
-**Headers:** `Authorization: Bearer <doctor_token>`  
-**Body:**
+*Auth: Doctor / Admin Bearer Token*
+
+**Request Body:**
 ```json
-{
-  "isAvailable": false
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Slot updated successfully",
-  "slot": { ... updated slot object ... }
-}
+{ "isAvailable": false }
 ```
 
-### Delete Slot
+### 5.5 Delete Slot
 **DELETE** `/api/slots/:id`  
-**Headers:** `Authorization: Bearer <doctor_token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Slot deleted successfully"
-}
-```
+*Auth: Doctor / Admin Bearer Token*
 
-## Appointments
+---
 
-### Get All Appointments
-**GET** `/api/appointments`  
-**Headers:** `Authorization: Bearer <token>`  
-**Query:** `?status=confirmed&doctorId=507f...&page=1&limit=10`  
-**Response:**
-```json
-{
-  "success": true,
-  "appointments": [
-    {
-      "_id": "507f1f77bcf86cd799439017",
-      "patientId": { ... patient details ... },
-      "doctorId": { ... doctor details ... },
-      "slotId": { ... slot details ... },
-      "status": "confirmed",
-      "appointmentDate": "2026-05-15T09:00:00Z",
-      "notes": "Patient has history of allergies",
-      "paymentStatus": "paid",
-      "videoCallUrl": "https://meet.example.com/room123",
-      "createdAt": "2026-04-20T10:00:00Z"
-    }
-  ],
-  "total": 15,
-  "page": 1,
-  "pages": 2
-}
-```
+## 6. Appointments (`/api/appointments`)
 
-### Get Appointment by ID
-**GET** `/api/appointments/:id`  
-**Headers:** `Authorization: Bearer <token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "appointment": {
-    "_id": "507f1f77bcf86cd799439017",
-    "patientId": { ... patient details ... },
-    "doctorId": { ... doctor details ... },
-    "slotId": { ... slot details ... },
-    "status": "confirmed",
-    "appointmentDate": "2026-05-15T09:00:00Z",
-    "notes": "Patient has history of allergies",
-    "paymentStatus": "paid",
-    "videoCallUrl": "https://meet.example.com/room123"
-  }
-}
-```
-
-### Create Appointment
+### 6.1 Book Appointment
 **POST** `/api/appointments`  
-**Headers:** `Authorization: Bearer <patient_token>`  
-**Body:**
+*Auth: Patient Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "doctorId": "507f1f77bcf86cd799439014",
-  "slotId": "507f1f77bcf86cd799439015",
-  "notes": "I have chest pain and anxiety"
+  "doctorId": "662f...",
+  "slotId": "662f...",
+  "patientName": "John Doe",
+  "age": 32,
+  "gender": "male",
+  "problem": "Frequent headaches and dizziness",
+  "notes": "Please prescribe medication if necessary"
 }
 ```
-**Response:**
+
+**Response (201 Created):**
 ```json
 {
   "success": true,
-  "message": "Appointment created successfully",
+  "status": true,
+  "message": "Appointment booked successfully",
+  "appointment_id": "662f...",
+  "amount": 500,
   "appointment": {
-    "_id": "507f1f77bcf86cd799439017",
-    "patientId": "507f1f77bcf86cd799439011",
-    "doctorId": "507f1f77bcf86cd799439014",
-    "slotId": "507f1f77bcf86cd799439015",
+    "_id": "662f...",
+    "userId": "662f...",
+    "patientId": "662f...",
+    "doctorId": "662f...",
+    "slotId": "662f...",
+    "patientName": "John Doe",
+    "amount": 500,
     "status": "pending",
-    "appointmentDate": "2026-05-15T09:00:00Z",
-    "notes": "I have chest pain and anxiety",
-    "paymentStatus": "unpaid"
+    "paymentStatus": "unpaid",
+    "appointmentDate": "2026-10-28T09:00:00Z"
   }
 }
 ```
 
-### Update Appointment
+### 6.2 List Appointments
+**GET** `/api/appointments`  
+*Auth: Bearer Token*  
+*Query Params: `?status=pending|confirmed|cancelled&doctorId=...&page=1`*
+
+### 6.3 Get Appointment by ID
+**GET** `/api/appointments/:id`  
+*Auth: Bearer Token*
+
+### 6.4 Update Appointment
 **PUT** `/api/appointments/:id`  
-**Headers:** `Authorization: Bearer <token>`  
-**Body:**
+*Auth: Bearer Token*
+
+**Request Body:**
 ```json
 {
   "status": "confirmed",
-  "notes": "Appointment confirmed. Please arrive 15 minutes early."
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Appointment updated successfully",
-  "appointment": { ... updated appointment object ... }
+  "notes": "Patient arrived on time."
 }
 ```
 
-### Cancel Appointment
+### 6.5 Cancel Appointment
 **PATCH** `/api/appointments/:id`  
-**Headers:** `Authorization: Bearer <token>`  
-**Body:**
+*Auth: Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "status": "cancelled",
-  "reason": "Emergency came up"
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Appointment cancelled successfully",
-  "appointment": { ... updated appointment object ... }
+  "reason": "Emergency travel arose."
 }
 ```
 
-### Delete Appointment
-**DELETE** `/api/appointments/:id`  
-**Headers:** `Authorization: Bearer <token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Appointment deleted successfully"
-}
-```
+### 6.6 Download Appointment Receipt PDF
+**GET** `/api/appointments/:id/pdf`  
+*Auth: Bearer Token*  
+*Returns a downloadable PDF receipt generated via PDFKit.*
 
-## Payments
+---
 
-### Get All Payments
-**GET** `/api/payments`  
-**Headers:** `Authorization: Bearer <admin_token>`  
-**Query:** `?status=completed&userId=507f...&page=1`  
-**Response:**
-```json
-{
-  "success": true,
-  "payments": [
-    {
-      "_id": "507f1f77bcf86cd799439018",
-      "appointmentId": "507f1f77bcf86cd799439017",
-      "userId": "507f1f77bcf86cd799439011",
-      "amount": 50,
-      "currency": "USD",
-      "status": "completed",
-      "paymentMethod": "card",
-      "transactionId": "TXN123456789",
-      "createdAt": "2026-04-25T15:30:00Z"
-    }
-  ],
-  "total": 100,
-  "page": 1,
-  "pages": 10
-}
-```
+## 7. Payments (`/api/payments`)
 
-### Get Payment by ID
-**GET** `/api/payments/:id`  
-**Headers:** `Authorization: Bearer <token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "payment": {
-    "_id": "507f1f77bcf86cd799439018",
-    "appointmentId": "507f1f77bcf86cd799439017",
-    "userId": "507f1f77bcf86cd799439011",
-    "amount": 50,
-    "currency": "USD",
-    "status": "completed",
-    "paymentMethod": "card",
-    "transactionId": "TXN123456789"
-  }
-}
-```
-
-### Initiate Payment
+### 7.1 Initiate Payment
 **POST** `/api/payments/initiate`  
-**Headers:** `Authorization: Bearer <patient_token>`  
-**Body:**
+*Auth: Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "appointmentId": "507f1f77bcf86cd799439017",
-  "amount": 50,
+  "appointmentId": "662f...",
+  "amount": 500,
   "paymentMethod": "card"
 }
 ```
+
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Payment initiated successfully",
   "payment": {
-    "_id": "507f1f77bcf86cd799439018",
-    "appointmentId": "507f1f77bcf86cd799439017",
-    "amount": 50,
-    "currency": "USD",
+    "_id": "662f...",
+    "amount": 500,
+    "currency": "INR",
     "status": "pending",
-    "paymentUrl": "https://payment-gateway.com/pay/123456"
+    "paymentUrl": "https://payment-gateway.com/pay/TXN..."
   }
 }
 ```
 
-### Update Payment Status
-**PATCH** `/api/payments/:id`  
-**Headers:** `Authorization: Bearer <admin_token>`  
-**Body:**
+### 7.2 Direct Pay (Confirm Booking Instantly)
+**POST** `/api/payments/pay`  
+*Auth: Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "status": "completed",
-  "transactionId": "TXN123456789"
+  "appointmentId": "662f...",
+  "paymentMethod": "upi"
 }
 ```
+
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Payment updated successfully",
-  "payment": { ... updated payment object ... }
-}
-```
-
-### Cancel Payment
-**DELETE** `/api/payments/:id`  
-**Headers:** `Authorization: Bearer <token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Payment cancelled successfully"
-}
-```
-
-## Video Calls
-
-### Start Video Call
-**POST** `/api/calls/start`  
-**Headers:** `Authorization: Bearer <token>`  
-**Body:**
-```json
-{
-  "appointmentId": "507f1f77bcf86cd799439017",
-  "callType": "video"
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Call started successfully",
-  "call": {
-    "_id": "507f1f77bcf86cd799439019",
-    "appointmentId": "507f1f77bcf86cd799439017",
-    "initiatorId": "507f1f77bcf86cd799439011",
-    "callType": "video",
-    "status": "ongoing",
-    "startTime": "2026-04-27T14:00:00Z",
-    "roomId": "room-507f1f77bcf86cd7"
+  "message": "Payment completed successfully",
+  "appointment_id": "662f...",
+  "booking_status": "confirmed",
+  "payment": {
+    "status": "completed",
+    "transactionId": "TXN..."
   }
 }
 ```
 
-### Get Call Status
-**GET** `/api/calls/:callId/status`  
-**Headers:** `Authorization: Bearer <token>`  
-**Response:**
-```json
-{
-  "success": true,
-  "call": {
-    "_id": "507f1f77bcf86cd799439019",
-    "status": "ongoing",
-    "participants": [
-      {
-        "userId": "507f1f77bcf86cd799439011",
-        "name": "John Doe",
-        "joinedAt": "2026-04-27T14:00:00Z"
-      }
-    ],
-    "duration": 120
-  }
-}
-```
+### 7.3 List All Payments (Admin)
+**GET** `/api/payments`  
+*Auth: Admin Bearer Token*
 
-### End Video Call
-**POST** `/api/calls/:callId/end`  
-**Headers:** `Authorization: Bearer <token>`  
-**Body:**
-```json
-{
-  "feedbackRating": 5,
-  "feedbackComment": "Great consultation!"
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Call ended successfully",
-  "callData": {
-    "_id": "507f1f77bcf86cd799439019",
-    "status": "ended",
-    "duration": 1200,
-    "endTime": "2026-04-27T14:20:00Z"
-  }
-}
-```
+---
 
-## Chat
+## 8. Real-time Chat (`/api/chat`)
 
-### Send Message
+### 8.1 Send Message
 **POST** `/api/chat/send`  
-**Headers:** `Authorization: Bearer <token>`  
-**Body:**
+*Auth: Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "recipientId": "507f1f77bcf86cd799439014",
-  "message": "Hi Doctor, I have a question about my prescription.",
-  "appointmentId": "507f1f77bcf86cd799439017"
+  "recipientId": "662f... (Doctor or Patient User ID)",
+  "message": "Hello Doctor, can I take the medication before breakfast?",
+  "appointmentId": "662f... (Optional)"
 }
 ```
-**Response:**
+
+**Response (201 Created):**
 ```json
 {
   "success": true,
-  "message": {
-    "_id": "507f1f77bcf86cd799439020",
-    "senderId": {
-      "_id": "507f1f77bcf86cd799439011",
-      "name": "John Doe"
-    },
-    "recipientId": {
-      "_id": "507f1f77bcf86cd799439014",
-      "name": "Dr. Smith"
-    },
-    "message": "Hi Doctor, I have a question...",
+  "message": "Message sent successfully",
+  "chatMessage": {
+    "_id": "662f...",
+    "senderId": { "name": "John Doe", "role": "patient" },
+    "recipientId": { "name": "Dr. John Smith", "role": "doctor" },
+    "message": "Hello Doctor, can I take the medication before breakfast?",
     "isRead": false,
-    "createdAt": "2026-04-27T14:30:00Z"
+    "createdAt": "2026-10-27T12:00:00Z"
   }
 }
 ```
 
-### Get Chat History
+### 8.2 Get Chat History
 **GET** `/api/chat/history/:recipientId`  
-**Headers:** `Authorization: Bearer <token>`  
-**Query:** `?page=1&limit=20&appointmentId=507f...`  
-**Response:**
-```json
-{
-  "success": true,
-  "messages": [
-    {
-      "_id": "507f1f77bcf86cd799439020",
-      "senderId": { ... sender details ... },
-      "recipientId": { ... recipient details ... },
-      "message": "Hi Doctor, I have a question...",
-      "isRead": true,
-      "readAt": "2026-04-27T14:35:00Z",
-      "createdAt": "2026-04-27T14:30:00Z"
-    }
-  ],
-  "total": 45,
-  "page": 1,
-  "pages": 3
-}
-```
+*Auth: Bearer Token*  
+*Query Params: `?page=1&limit=50&appointmentId=...`*
 
-### Get All Conversations
+### 8.3 Get All Active Conversations
 **GET** `/api/chat/conversations`  
-**Headers:** `Authorization: Bearer <token>`  
+*Auth: Bearer Token*
+
 **Response:**
 ```json
 {
@@ -809,72 +539,110 @@
   "conversations": [
     {
       "conversationPartner": {
-        "_id": "507f1f77bcf86cd799439014",
-        "name": "Dr. Smith"
+        "_id": "662f...",
+        "name": "Dr. John Smith",
+        "profilePic": "...",
+        "role": "doctor"
       },
-      "lastMessage": "Sure, I'd be happy to help.",
-      "unreadCount": 2,
-      "lastMessageTime": "2026-04-27T14:32:00Z"
+      "lastMessage": "Please bring any past ECG reports.",
+      "unreadCount": 1
     }
   ]
 }
 ```
 
-### Mark Messages as Read
-**POST** `/api/chat/mark-read`  
-**Headers:** `Authorization: Bearer <token>`  
-**Body:**
-```json
-{
-  "senderId": "507f1f77bcf86cd799439014"
-}
-```
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Messages marked as read"
-}
-```
-
-### Get Unread Count
+### 8.4 Get Unread Messages Count
 **GET** `/api/chat/unread-count`  
-**Headers:** `Authorization: Bearer <token>`  
+*Auth: Bearer Token*
+
 **Response:**
 ```json
 {
   "success": true,
-  "unreadCount": 5
+  "unreadCount": 1
 }
 ```
 
-### Delete Message
+### 8.5 Mark Messages as Read
+**POST** `/api/chat/mark-read`  
+*Auth: Bearer Token*
+
+**Request Body:**
+```json
+{
+  "senderId": "662f..."
+}
+```
+
+### 8.6 Search Messages
+**GET** `/api/chat/search?query=ecg`  
+*Auth: Bearer Token*
+
+### 8.7 Delete Message
 **DELETE** `/api/chat/message/:messageId`  
-**Headers:** `Authorization: Bearer <token>`  
+*Auth: Bearer Token*
+
+---
+
+## 9. Video & Audio Calls (`/api/calls`)
+
+### 9.1 Start a Call
+**POST** `/api/calls/start`  
+*Auth: Bearer Token*
+
+**Request Body:**
+```json
+{
+  "appointmentId": "662f...",
+  "callType": "video"
+}
+```
+*Note: `callType` can be `"video"` or `"audio"`.*
+
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Message deleted successfully"
+  "message": "Call started successfully",
+  "call": {
+    "_id": "call_662f_1730000000",
+    "callType": "video",
+    "status": "ongoing",
+    "roomId": "room-662f...",
+    "startTime": "2026-10-27T12:00:00Z"
+  }
 }
 ```
 
-### Search Messages
-**GET** `/api/chat/search`  
-**Headers:** `Authorization: Bearer <token>`  
-**Query:** `?query=prescription&recipientId=507f...`  
-**Response:**
+### 9.2 Get Call Status
+**GET** `/api/calls/:callId/status` or `GET /api/calls/status/:appointmentId`  
+*Auth: Bearer Token*
+
+### 9.3 End Call & Submit Feedback
+**POST** `/api/calls/:callId/end` or `POST /api/calls/end/:appointmentId`  
+*Auth: Bearer Token*
+
+**Request Body:**
 ```json
 {
-  "success": true,
-  "results": [
-    {
-      "_id": "507f1f77bcf86cd799439020",
-      "message": "Hi Doctor, I have a question about my prescription.",
-      "senderId": { ... },
-      "recipientId": { ... },
-      "createdAt": "2026-04-27T14:30:00Z"
-    }
-  ]
+  "feedbackRating": 5,
+  "feedbackComment": "Great consultation, thank you Doctor!"
 }
 ```
+
+### 9.4 Call History
+**GET** `/api/calls/history`  
+*Auth: Bearer Token*
+
+### 9.5 Browser Test Client for WebRTC Calls
+Open in browser:  
+`http://localhost:5000/video-call.html`
+
+---
+
+## 10. Health Check & Root
+- **Root:** `GET http://localhost:5000/api`
+- **Health:** `GET http://localhost:5000/api/health`
+
+---
+*Generated & Verified for Medora / FeelGood Doctor Appointment Backend.*

@@ -4,72 +4,119 @@ const Doctor = require("../models/Doctor");
 
 exports.createAppointment = async (req, res) => {
   try {
-    const { doctor_id, slot_id, patient_name, age, gender } = req.body || {};
+    const { doctor_id, slot_id, patient_name, age, gender, problem, notes } = req.body || {};
     const doctorId = doctor_id || req.body?.doctorId;
     const slotId = slot_id || req.body?.slotId;
-    const patientName = patient_name || req.body?.patientName;
+    const patientName = patient_name || req.body?.patientName || req.user?.name || "Patient";
 
-    if (!doctorId || !slotId || !patientName || !age || !gender) {
-      return res.status(400).json({ status: false, message: "Missing required fields" });
+    if (!doctorId || !slotId) {
+      return res.status(400).json({ success: false, status: false, message: "doctorId and slotId are required" });
     }
 
+    // Try booking the slot
     const bookedSlot = await Slot.findOneAndUpdate(
-      { _id: slotId, doctorId, isBooked: false },
-      { $set: { isBooked: true } },
+      {
+        _id: slotId,
+        doctorId,
+        $or: [{ isBooked: false }, { isAvailable: true }]
+      },
+      { $set: { isBooked: true, isAvailable: false } },
       { new: true }
     );
 
     if (!bookedSlot) {
-      return res.status(400).json({ status: false, message: "Slot already booked / invalid slot" });
+      return res.status(400).json({ success: false, status: false, message: "Slot already booked or invalid slot" });
     }
 
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
-      await Slot.updateOne({ _id: slotId }, { $set: { isBooked: false } });
-      return res.status(404).json({ status: false, message: "Doctor not found" });
+      await Slot.updateOne({ _id: slotId }, { $set: { isBooked: false, isAvailable: true } });
+      return res.status(404).json({ success: false, status: false, message: "Doctor not found" });
     }
 
     const appointmentData = {
-      ...req.body,
       userId: req.user.id,
+      patientId: req.user.id,
       doctorId,
       slotId,
       patientName,
+      age: age || 25,
+      gender: gender || "Not Specified",
+      problem: problem || notes || "",
+      notes: notes || problem || "",
       amount: doctor.consultationFee,
-      status: "PENDING_PAYMENT"
+      status: "pending",
+      paymentStatus: "unpaid",
+      appointmentDate: bookedSlot.startTime || bookedSlot.date || new Date().toISOString()
     };
 
     const appt = await Appointment.create(appointmentData);
 
-    return res.json({
+    return res.status(201).json({
+      success: true,
       status: true,
+      message: "Appointment booked successfully",
       appointment_id: appt._id,
       amount: doctor.consultationFee,
       appointment: appt
     });
   } catch (err) {
-    if (req.body?.slot_id) {
-      await Slot.updateOne({ _id: req.body.slot_id }, { $set: { isBooked: false } }).catch(() => {});
+    if (req.body?.slotId || req.body?.slot_id) {
+      const slotId = req.body.slotId || req.body.slot_id;
+      await Slot.updateOne({ _id: slotId }, { $set: { isBooked: false, isAvailable: true } }).catch(() => {});
     }
-    res.status(500).json({ status: false, message: err.message });
+    res.status(500).json({ success: false, status: false, message: err.message });
   }
 };
 
 exports.getAppointments = async (req, res) => {
   try {
+    const { status, doctorId, page = 1, limit = 20 } = req.query;
+
     const filter = {};
-    if (req.query.doctor_id) filter.doctorId = req.query.doctor_id;
-    if (req.query.user_id) filter.userId = req.query.user_id;
-    if (req.query.status) filter.status = req.query.status;
+    if (status) {
+      filter.$or = [
+        { status: status },
+        { status: status.toUpperCase() }
+      ];
+    }
+    if (doctorId) filter.doctorId = doctorId;
 
-    const list = await Appointment.find(filter)
-      .populate("doctorId")
-      .populate("slotId")
-      .populate("userId");
+    // Non-admin users only see their own appointments (or doctor seeing appointments booked with them)
+    if (req.user.role === "doctor") {
+      // Find doctor record for this user
+      const doc = await Doctor.findOne({ userId: req.user.id });
+      if (doc) filter.doctorId = doc._id;
+    } else if (req.user.role !== "admin") {
+      filter.$or = [{ userId: req.user.id }, { patientId: req.user.id }];
+    }
 
-    res.json({ status: true, appointments: list });
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [appointments, total] = await Promise.all([
+      Appointment.find(filter)
+        .populate("doctorId")
+        .populate("slotId")
+        .populate("userId", "name email phone profilePic")
+        .populate("patientId", "name email phone profilePic")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Appointment.countDocuments(filter)
+    ]);
+
+    res.json({
+      success: true,
+      status: true,
+      appointments,
+      total,
+      page: pageNum,
+      pages: Math.ceil(total / limitNum) || 1
+    });
   } catch (err) {
-    res.status(500).json({ status: false, message: err.message });
+    res.status(500).json({ success: false, status: false, message: err.message });
   }
 };
 
@@ -78,75 +125,101 @@ exports.getAppointment = async (req, res) => {
     const appt = await Appointment.findById(req.params.id)
       .populate("doctorId")
       .populate("slotId")
-      .populate("userId");
+      .populate("userId", "name email phone profilePic")
+      .populate("patientId", "name email phone profilePic");
 
     if (!appt) {
-      return res.status(404).json({ status: false, message: "Appointment not found" });
+      return res.status(404).json({ success: false, status: false, message: "Appointment not found" });
     }
 
-    res.json({ status: true, appointment: appt });
+    res.json({
+      success: true,
+      status: true,
+      appointment: appt
+    });
   } catch (err) {
-    res.status(500).json({ status: false, message: err.message });
+    res.status(500).json({ success: false, status: false, message: err.message });
   }
 };
 
 exports.updateAppointment = async (req, res) => {
   try {
-    const { doctor_id, slot_id, patient_name } = req.body || {};
-    const appointment = await Appointment.findById(req.params.id);
-    if (!appointment) {
-      return res.status(404).json({ status: false, message: "Appointment not found" });
+    const appt = await Appointment.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+      strict: false
+    })
+      .populate("doctorId")
+      .populate("slotId");
+
+    if (!appt) {
+      return res.status(404).json({ success: false, status: false, message: "Appointment not found" });
     }
 
-    const doctorId = doctor_id || req.body?.doctorId || appointment.doctorId;
-    const slotId = slot_id || req.body?.slotId;
-
-    if (slotId && String(slotId) !== String(appointment.slotId)) {
-      const bookedSlot = await Slot.findOneAndUpdate(
-        { _id: slotId, doctorId, isBooked: false },
-        { $set: { isBooked: true } },
-        { new: true }
-      );
-
-      if (!bookedSlot) {
-        return res.status(400).json({ status: false, message: "Target slot invalid or already booked" });
-      }
-
-      await Slot.updateOne({ _id: appointment.slotId }, { $set: { isBooked: false } });
-      appointment.slotId = slotId;
-    }
-
-    const appointmentData = {
-      ...req.body,
-      doctorId,
-      slotId: slotId || appointment.slotId,
-      patientName: patient_name || req.body?.patientName || appointment.patientName,
-    };
-
-    appointment.set(appointmentData);
-
-    if (req.body.doctor_id || req.body.doctorId) {
-      const doctor = await Doctor.findById(doctorId);
-      if (doctor) appointment.amount = doctor.consultationFee;
-    }
-
-    await appointment.save();
-    res.json({ status: true, message: "Appointment updated", appointment });
+    res.json({
+      success: true,
+      status: true,
+      message: "Appointment updated successfully",
+      appointment: appt
+    });
   } catch (err) {
-    res.status(500).json({ status: false, message: err.message });
+    res.status(500).json({ success: false, status: false, message: err.message });
+  }
+};
+
+exports.cancelAppointment = async (req, res) => {
+  try {
+    const { reason } = req.body || {};
+
+    const appt = await Appointment.findById(req.params.id);
+    if (!appt) {
+      return res.status(404).json({ success: false, status: false, message: "Appointment not found" });
+    }
+
+    appt.status = "cancelled";
+    if (reason) appt.cancellationReason = reason;
+    await appt.save();
+
+    // Free up the slot
+    if (appt.slotId) {
+      await Slot.findByIdAndUpdate(appt.slotId, {
+        isBooked: false,
+        isAvailable: true
+      });
+    }
+
+    res.json({
+      success: true,
+      status: true,
+      message: "Appointment cancelled successfully",
+      appointment: appt
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, status: false, message: err.message });
   }
 };
 
 exports.deleteAppointment = async (req, res) => {
   try {
-    const appointment = await Appointment.findByIdAndDelete(req.params.id);
-    if (!appointment) {
-      return res.status(404).json({ status: false, message: "Appointment not found" });
+    const appt = await Appointment.findByIdAndDelete(req.params.id);
+    if (!appt) {
+      return res.status(404).json({ success: false, status: false, message: "Appointment not found" });
     }
 
-    await Slot.updateOne({ _id: appointment.slotId }, { $set: { isBooked: false } }).catch(() => {});
-    res.json({ status: true, message: "Appointment deleted" });
+    // Free up the slot if it was booked
+    if (appt.slotId) {
+      await Slot.findByIdAndUpdate(appt.slotId, {
+        isBooked: false,
+        isAvailable: true
+      });
+    }
+
+    res.json({
+      success: true,
+      status: true,
+      message: "Appointment deleted successfully"
+    });
   } catch (err) {
-    res.status(500).json({ status: false, message: err.message });
+    res.status(500).json({ success: false, status: false, message: err.message });
   }
 };
