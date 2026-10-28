@@ -355,7 +355,7 @@ function generatePDF() {
 }`
   );
 
-  addEndpoint("GET", "/api/appointments/:id/pdf", "Download appointment receipt slip as PDF.", "Bearer Token");
+  addEndpoint("GET", "/api/appointments/:id/pdf", "Download appointment receipt slip as PDF.", "None (Public)");
 
   // Section: Payments
   addSectionHeading("9. Payments Flow (/api/payments)");

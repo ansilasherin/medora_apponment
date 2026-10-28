@@ -3,9 +3,14 @@ const jwt = require("jsonwebtoken");
 module.exports = function auth(req, res, next) {
   const header = req.headers.authorization || "";
 
-  const token = header.startsWith("Bearer ")
-    ? header.slice(7)
-    : (header ? header : null);
+  let token = null;
+  if (header.startsWith("Bearer ")) {
+    token = header.slice(7);
+  } else if (header) {
+    token = header;
+  } else if (req.query && req.query.token) {
+    token = req.query.token;
+  }
 
   if (!token) {
     return res.status(401).json({

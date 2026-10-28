@@ -29,12 +29,12 @@ exports.getAppointmentPDF = async (req, res) => {
     doc.moveDown();
 
     doc.fontSize(12).text(`Appointment ID: ${appt._id}`);
-    doc.text(`Patient: ${appt.patientName}`);
-    doc.text(`Doctor: ${appt.doctorId.name}`);
-    doc.text(`Date: ${appt.slotId.date}`);
-    doc.text(`Time: ${appt.slotId.time}`);
-    doc.text(`Fee: ₹${appt.amount}`);
-    doc.text(`Status: ${appt.status}`);
+    doc.text(`Patient: ${appt.patientName || appt.userId?.name || "N/A"}`);
+    doc.text(`Doctor: ${appt.doctorId?.name || "N/A"}`);
+    doc.text(`Date: ${appt.slotId?.date || "N/A"}`);
+    doc.text(`Time: ${appt.slotId?.time || "N/A"}`);
+    doc.text(`Fee: ₹${appt.amount !== undefined ? appt.amount : "N/A"}`);
+    doc.text(`Status: ${appt.status || "Booked"}`);
 
     doc.end();
 
