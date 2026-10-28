@@ -4,7 +4,7 @@ const Slot = require("../models/Slot");
 exports.getSlotsByDoctor = async (req, res) => {
   try {
     const doctorId = req.params.doctorId || req.params.id;
-    const { date, available } = req.query;
+    const { date, available, limit } = req.query;
 
     const filter = { doctorId };
 
@@ -17,13 +17,18 @@ exports.getSlotsByDoctor = async (req, res) => {
 
     if (available !== undefined) {
       const isAvail = available === "true" || available === true;
-      filter.$or = [
-        { isAvailable: isAvail },
-        { isBooked: !isAvail }
-      ];
+      if (isAvail) {
+        filter.isAvailable = true;
+        filter.isBooked = { $ne: true };
+      } else {
+        filter.isBooked = true;
+      }
     }
 
-    const slots = await Slot.find(filter).sort({ startTime: 1, time: 1 });
+    const maxLimit = limit ? parseInt(limit, 10) : 6;
+    const slots = await Slot.find(filter)
+      .sort({ startTime: 1, time: 1 })
+      .limit(maxLimit);
 
     res.json({
       success: true,
